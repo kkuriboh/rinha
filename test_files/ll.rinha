@@ -1,0 +1,23 @@
+let nil = "<nil>";
+let add = fn(ls, item) => {
+  if (ls == nil) {
+    (item, nil)
+  } else {
+    let x = first(ls);
+    let xs = second(ls);
+    if (xs == nil) {
+      (x, (item, nil))
+    } else {
+      (x, add(xs, item))
+    }
+  }
+};
+
+let my_list = nil;
+let my_list = add(my_list, 1);
+let my_list = add(my_list, 2);
+let my_list = add(my_list, 3);
+let my_list = add(my_list, 6);
+let my_list = add(my_list, 7);
+let my_list = add(my_list, 999);
+print(my_list) //(1, (2, (3, (6, (7, (999, <nil>))))))

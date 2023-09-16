@@ -35,7 +35,7 @@ pub enum Expr {
 		then: BExpr,
 		otherwise: BExpr,
 	},
-	Tuple(BExpr, Box<Expr>),
+	Tuple(BExpr, BExpr),
 	Application {
 		funct: Ident,
 		args: Vec<Expr>,

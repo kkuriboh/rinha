@@ -27,40 +27,46 @@ pub enum JsonValue {
 }
 
 impl JsonValue {
+	#[inline]
 	pub fn extract_bool(&self) -> bool {
 		match self {
 			JsonValue::Boolean(b) => *b,
-			_ => panic!("not a bool"),
+			_ => unsafe { std::hint::unreachable_unchecked() },
 		}
 	}
+	#[inline]
 	pub fn extract_str(&self) -> &str {
 		match self {
 			JsonValue::Str(s) => s,
-			_ => panic!("not a string"),
+			_ => unsafe { std::hint::unreachable_unchecked() },
 		}
 	}
+	#[inline]
 	pub fn extract_num(&self) -> i32 {
 		match self {
 			JsonValue::Num(i) => *i,
-			_ => panic!("not a number"),
+			_ => unsafe { std::hint::unreachable_unchecked() },
 		}
 	}
+	#[inline]
 	pub fn extract_array(&self) -> &Vec<JsonValue> {
 		match self {
 			JsonValue::Array(arr) => arr,
-			_ => panic!("not an array"),
+			_ => unsafe { std::hint::unreachable_unchecked() },
 		}
 	}
+	#[inline]
 	pub fn extract_object(&self) -> &Obj {
 		match self {
 			JsonValue::Object(obj) => obj,
-			_ => panic!("not an object"),
+			_ => unsafe { std::hint::unreachable_unchecked() },
 		}
 	}
+	#[inline]
 	pub fn extract_object_key(&self, idx: usize) -> &JsonValue {
 		match self {
 			JsonValue::Object(obj) => &obj[idx],
-			_ => panic!("not an object"),
+			_ => unsafe { std::hint::unreachable_unchecked() },
 		}
 	}
 }

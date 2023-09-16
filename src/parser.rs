@@ -97,7 +97,7 @@ fn parse_tuple(parent: &[JsonValue]) -> Expr {
 #[inline]
 fn parse_application(parent: &[JsonValue]) -> Expr {
 	let Expr::Variable(funct) = parse_variable(&*parent[1].extract_object()) else {
-		unreachable!("im parsing json like a child")
+		unsafe { std::hint::unreachable_unchecked() }
 	};
 
 	let args = parent[2]

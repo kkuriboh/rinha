@@ -1,13 +1,25 @@
-mod compiler;
+#![allow(unused, dead_code)]
+
+use std::{collections::HashMap, fs::File};
+
+mod codegen;
 mod expr;
 mod json;
 mod parser;
 
+pub type Context<'ctx, T> = HashMap<&'ctx str, T>;
+
 fn main() {
-	let mut args = std::env::args();
-	let file_path = unsafe { args.nth(1).unwrap_unchecked() };
-	let now = std::time::SystemTime::now();
-	parser::parse(file_path).unwrap();
-	let after = unsafe { now.elapsed().unwrap_unchecked().as_nanos() };
-	println!("{after}")
+	#[cfg(debug_assertions)]
+	let file_path = {
+		let mut args = std::env::args();
+		args.nth(1).unwrap()
+	};
+	#[cfg(not(debug_assertions))]
+	let file_path = env!("FILE_PATH");
+
+	let file = parser::parse(file_path);
+
+	let mut f = codegen::Codegen::new(file.expr, File::create("main.hvm").unwrap());
+	f.transpile();
 }

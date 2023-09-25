@@ -1,20 +1,23 @@
-#[derive(Debug, PartialEq)]
-pub struct Ident(String);
+use std::fmt::Display;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Ident(pub String);
 impl From<String> for Ident {
 	fn from(value: String) -> Self {
 		Self(value)
 	}
 }
-// impl Ident {
-//     #[inline]
-//     pub fn val(&self) -> &str {
-//         &self.0
-//     }
-// }
+
+impl Ident {
+	#[inline]
+	pub fn val(&self) -> &str {
+		&self.0
+	}
+}
 
 type BExpr = Box<Expr>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expr {
 	Int(i32),
 	Bool(bool),
@@ -46,7 +49,7 @@ pub enum Expr {
 	},
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum BinOp {
 	Add,
 	Sub,
@@ -81,5 +84,27 @@ impl From<&str> for BinOp {
 			"Or" => Self::Or,
 			_ => panic!("Invalid operator"),
 		}
+	}
+}
+
+impl Display for BinOp {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		let str = match self {
+			Self::Add => "+",
+			Self::Sub => "-",
+			Self::Mul => "*",
+			Self::Div => "/",
+			Self::Rem => "%",
+			Self::Eq => "==",
+			Self::Neq => "!=",
+			Self::Lt => "<",
+			Self::Gt => ">",
+			Self::Lte => "<=",
+			Self::Gte => ">=",
+			Self::And => "&",
+			Self::Or => "|",
+		};
+
+		write!(f, "{str}")
 	}
 }

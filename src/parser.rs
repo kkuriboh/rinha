@@ -1,4 +1,3 @@
-use anyhow::Error;
 use std::path::Path;
 
 use crate::{
@@ -11,18 +10,18 @@ pub struct File {
 	pub expr: Expr,
 }
 
-pub fn parse(file_path: impl AsRef<Path>) -> anyhow::Result<File> {
-	let data = std::fs::read_to_string(file_path)?;
-	let file = json::run::<winnow::error::ErrorKind>(&mut data.as_str()).map_err(Error::msg)?;
+pub fn parse(file_path: impl AsRef<Path>) -> File {
+	let data = std::fs::read_to_string(file_path).unwrap();
+	let file = json::run::<winnow::error::ErrorKind>(&mut data.as_str()).unwrap();
 
 	let name = file.extract_object_key(0).extract_str();
 	let expr = file.extract_object_key(1).extract_object();
 	let expr = parse_expr(&expr);
 
-	Ok(File {
+	File {
 		name: name.to_owned(),
 		expr,
-	})
+	}
 }
 
 fn parse_expr(expr: &[JsonValue]) -> Expr {
@@ -135,7 +134,7 @@ mod tests {
 
 	#[test]
 	fn parse_fib() {
-		let file = parse("test_files/fib.json").unwrap();
+		let file = parse("test_files/fib.json");
 		assert_eq!(
 			file.expr,
 			Expr::Let {

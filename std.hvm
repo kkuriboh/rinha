@@ -1,0 +1,4 @@
+(If 1 then _) = (then)
+(If 0 _ otherwhise) = (otherwhise)
+(First (Pair f _)) = (f)
+(Second (Pair _ s)) = (s)

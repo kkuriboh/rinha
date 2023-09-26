@@ -1,7 +1,4 @@
-use std::{
-	collections::{HashMap, HashSet},
-	io::{BufWriter, Write},
-};
+use std::{collections::HashMap, io::Write};
 
 use micromap::Map;
 
@@ -19,7 +16,7 @@ impl<T: Write> Codegen<T> {
 
 	pub fn transpile(mut self) {
 		let code = Transpiler::new().transpile(self.expr);
-		self.buffer.write_all(code.as_bytes());
+		self.buffer.write_all(code.as_bytes()).unwrap();
 	}
 }
 
@@ -57,18 +54,18 @@ impl Transpiler {
 
 	fn new() -> Self {
 		let builtins = Map::from([
-			("print", "HVM.print"),
-			("first", "First"),
-			("second", "Second"),
+			("print", "STD.print"),
+			("first", "STD.first"),
+			("second", "STD.second"),
 		]);
 
 		Self {
 			main_func: vec![],
 			builtins,
 			variables: HashMap::from([
-				("print".into(), "HVM.print".into()),
-				("first".into(), "First".into()),
-				("second".into(), "Second".into()),
+				("print".into(), "STD.print".into()),
+				("first".into(), "STD.first".into()),
+				("second".into(), "STD.second".into()),
 			]),
 		}
 	}
@@ -104,7 +101,7 @@ impl Transpiler {
 				otherwise,
 			} => {
 				format!(
-					"(If ({}) ({}) ({}))",
+					"(STD.if ({}) ({}) ({}))",
 					self.transpile_expr(*condition, depth + 1),
 					self.transpile_expr(*then, depth + 1),
 					self.transpile_expr(*otherwise, depth + 1)

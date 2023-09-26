@@ -1,5 +1,3 @@
-#![allow(unused, dead_code)]
-
 use std::{collections::HashMap, fs::File};
 
 mod codegen;
@@ -20,6 +18,5 @@ fn main() {
 
 	let file = parser::parse(file_path);
 
-	let mut f = codegen::Codegen::new(file.expr, File::create("main.hvm").unwrap());
-	f.transpile();
+	codegen::Codegen::new(file.expr, File::create("main.hvm").unwrap()).transpile();
 }

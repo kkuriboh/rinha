@@ -1,8 +1,0 @@
-(Combination n k) = (let a = (== k 0);
-	let b = (== k n);
-	(If ((| a b)) (1) ((+ (Combination (- n 1) (- k 1)) (Combination (- n 1) k)))))
-(If 1 then _) = (then)
-(If 0 _ otherwhise) = (otherwhise)
-(First (Pair f _)) = (f)
-(Second (Pair _ s)) = (s)
-(Main) = ((HVM.print (Combination 10 2)))

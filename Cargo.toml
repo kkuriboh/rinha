@@ -5,13 +5,7 @@ edition = "2021"
 
 [dependencies]
 micromap = "0.0.14"
-# anyhow = "1.0.75"
-# inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "master", features = ["llvm16-0", "llvm16-0-no-llvm-linking"] }
-# micromap = "0.0.14"
-# nohash-hasher = "0.2.0"
 winnow = "0.5.15"
-# hvm-lang = { git = "https://github.com/HigherOrderCO/hvm-lang.git" }
-# hvm-core = { git = "https://github.com/HigherOrderCO/hvm-core.git" }
 
 [profile.release]
 codegen-units = 1

@@ -1,4 +1,4 @@
-FROM rust:bullseye as builder
+FROM rust:slim-bookworm as builder
 WORKDIR /opt/app
 COPY . .
 
@@ -11,11 +11,9 @@ RUN cargo b -r
 RUN cp target/release/rinha .
 RUN cp $(which hvm) .
 
-FROM bitnami/minideb
-WORKDIR /opt/app
+FROM debian:bookworm-slim
 
-COPY --from=builder /opt/app/rinha .
-COPY --from=builder /opt/app/hvm .
-COPY --from=builder /opt/app/run.sh .
+COPY --from=builder /opt/app/rinha /
+COPY --from=builder /opt/app/hvm /
 
-ENTRYPOINT ["./run.sh"]
+CMD dash -c "./rinha && ./hvm run -f main.hvm"

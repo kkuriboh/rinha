@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use crate::{
-	expr::{Expr, Ident},
+	expr::{BinOp, Expr, Ident},
 	json::{self, JsonValue},
 };
 
@@ -57,11 +57,39 @@ fn parse_variable(parent: &[JsonValue]) -> Expr {
 
 #[inline]
 fn parse_binary(parent: &[JsonValue]) -> Expr {
-	let lhs = parse_expr(&parent[1].extract_object()).into();
+	let lhs: Box<Expr> = parse_expr(&parent[1].extract_object()).into();
 	let op = parent[2].extract_str().into();
-	let rhs = parse_expr(&parent[3].extract_object()).into();
+	let rhs: Box<Expr> = parse_expr(&parent[3].extract_object()).into();
 
-	Expr::Binary { lhs, op, rhs }
+	match (lhs.as_ref(), op, rhs.as_ref()) {
+		(Expr::Int(i1), BinOp::Add, Expr::Int(i2)) => Expr::Int(i1 + i2),
+		(Expr::Int(i1), BinOp::Sub, Expr::Int(i2)) => Expr::Int(i1 - i2),
+		(Expr::Int(i1), BinOp::Div, Expr::Int(i2)) => Expr::Int(i1 / i2),
+		(Expr::Int(i1), BinOp::Mul, Expr::Int(i2)) => Expr::Int(i1 * i2),
+		(Expr::Int(i1), BinOp::Rem, Expr::Int(i2)) => Expr::Int(i1 % i2),
+		(Expr::Int(i1), BinOp::And, Expr::Int(i2)) => Expr::Int(i1 & i2),
+		(Expr::Int(i1), BinOp::Or, Expr::Int(i2)) => Expr::Int(i1 | i2),
+		(Expr::Int(i1), BinOp::Eq, Expr::Int(i2)) => Expr::Bool(i1 == i2),
+		(Expr::Int(i1), BinOp::Neq, Expr::Int(i2)) => Expr::Bool(i1 != i2),
+		(Expr::Int(i1), BinOp::Lt, Expr::Int(i2)) => Expr::Bool(i1 < i2),
+		(Expr::Int(i1), BinOp::Lte, Expr::Int(i2)) => Expr::Bool(i1 <= i2),
+		(Expr::Int(i1), BinOp::Gt, Expr::Int(i2)) => Expr::Bool(i1 > i2),
+		(Expr::Int(i1), BinOp::Gte, Expr::Int(i2)) => Expr::Bool(i1 >= i2),
+		(Expr::Bool(b1), BinOp::And, Expr::Bool(b2)) => Expr::Bool(b1 & b2),
+		(Expr::Bool(b1), BinOp::Or, Expr::Bool(b2)) => Expr::Bool(b1 | b2),
+		(Expr::Bool(b1), BinOp::Eq, Expr::Bool(b2)) => Expr::Bool(b1 == b2),
+		(Expr::Bool(b1), BinOp::Neq, Expr::Bool(b2)) => Expr::Bool(b1 != b2),
+		(Expr::Bool(b1), BinOp::Lt, Expr::Bool(b2)) => Expr::Bool(b1 < b2),
+		(Expr::Bool(b1), BinOp::Lte, Expr::Bool(b2)) => Expr::Bool(b1 <= b2),
+		(Expr::Bool(b1), BinOp::Gt, Expr::Bool(b2)) => Expr::Bool(b1 > b2),
+		(Expr::Bool(b1), BinOp::Gte, Expr::Bool(b2)) => Expr::Bool(b1 >= b2),
+		(Expr::Str(s1), BinOp::Add, Expr::Str(s2)) => Expr::Str(format!("{s1}{s2}")),
+		(Expr::Int(i1), BinOp::Add, Expr::Str(s2)) => Expr::Str(format!("{i1}{s2}")),
+		(Expr::Str(s1), BinOp::Add, Expr::Int(i2)) => Expr::Str(format!("{s1}{i2}")),
+		(Expr::Bool(b1), BinOp::Add, Expr::Str(s2)) => Expr::Str(format!("{b1}{s2}")),
+		(Expr::Str(s1), BinOp::Add, Expr::Bool(b2)) => Expr::Str(format!("{s1}{b2}")),
+		(_, op, _) => Expr::Binary { lhs, op, rhs },
+	}
 }
 
 #[inline]

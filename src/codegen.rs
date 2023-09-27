@@ -82,26 +82,23 @@ impl Transpiler {
 
 	fn transpile_expr(&mut self, expr: Expr, depth: usize) -> String {
 		match expr {
-			Expr::Int(i) => i.to_string(),
-			Expr::Str(s) => format!("\"{s}\""),
-			Expr::Bool(true) => 1.to_string(),
-			Expr::Bool(false) => 0.to_string(),
+			Expr::Int(i) => format!("(STD.int {i})"),
+			Expr::Str(s) => format!("{s:?}"),
+			Expr::Bool(true) => format!("(STD.bool 1)"),
+			Expr::Bool(false) => format!("(STD.bool 0)"),
 			Expr::Variable(v) => self.variables.get(v.val()).unwrap().clone(),
-			Expr::Binary { lhs, op, rhs } => match (*lhs, *rhs) {
-				// TODO: constant folding
-				(lhs, rhs) => {
-					let lhs = self.transpile_expr(lhs, depth + 1);
-					let rhs = self.transpile_expr(rhs, depth + 1);
-					format!("({op} {lhs} {rhs})")
-				}
-			},
+			Expr::Binary { lhs, op, rhs } => {
+				let lhs = self.transpile_expr(*lhs, depth + 1);
+				let rhs = self.transpile_expr(*rhs, depth + 1);
+				format!("({op} {lhs} {rhs})")
+			}
 			Expr::If {
 				condition,
 				then,
 				otherwise,
 			} => {
 				format!(
-					"(STD.if ({}) ({}) ({}))",
+					"(STD.if ({}) @_({}) @_({}))",
 					self.transpile_expr(*condition, depth + 1),
 					self.transpile_expr(*then, depth + 1),
 					self.transpile_expr(*otherwise, depth + 1)
@@ -124,7 +121,7 @@ impl Transpiler {
 						self.main_func.insert(0, next);
 
 						format!(
-							"({name}{}) = ({})",
+							"({name}{}) = (STD.closure ({}))",
 							args.iter().fold(String::new(), |mut acc, ident| {
 								acc.push(' ');
 								acc.push_str(ident.val());
@@ -179,7 +176,11 @@ impl Transpiler {
 
 				match self.builtins.get(fn_name) {
 					Some(name) => format!("({} {})", name, args),
-					None => format!("({} {})", self.variables.get(fn_name).unwrap(), args),
+					None => format!(
+						"(STD.call ({} {}))",
+						self.variables.get(fn_name).unwrap(),
+						args
+					),
 				}
 			}
 			Expr::Abstraction { args, body } => {
@@ -188,7 +189,7 @@ impl Transpiler {
 				}
 
 				format!(
-					"({}({}))",
+					"(STD.closure ({}({})))",
 					args.iter().fold(String::new(), |mut acc, ident| {
 						acc.push('@');
 						acc.push_str(ident.val());

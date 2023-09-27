@@ -90,19 +90,19 @@ impl From<&str> for BinOp {
 impl Display for BinOp {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let str = match self {
-			Self::Add => "+",
-			Self::Sub => "-",
-			Self::Mul => "*",
-			Self::Div => "/",
-			Self::Rem => "%",
-			Self::Eq => "==",
-			Self::Neq => "!=",
-			Self::Lt => "<",
-			Self::Gt => ">",
-			Self::Lte => "<=",
-			Self::Gte => ">=",
-			Self::And => "&",
-			Self::Or => "|",
+			Self::Add => "STD.add",
+			Self::Sub => "STD.sub",
+			Self::Mul => "STD.mul",
+			Self::Div => "STD.div",
+			Self::Rem => "STD.rem",
+			Self::Eq => "STD.eq",
+			Self::Neq => "STD.neq",
+			Self::Lt => "STD.lt",
+			Self::Gt => "STD.gt",
+			Self::Lte => "STD.lte",
+			Self::Gte => "STD.gte",
+			Self::And => "STD.and",
+			Self::Or => "STD.or",
 		};
 
 		write!(f, "{str}")

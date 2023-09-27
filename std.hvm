@@ -3,11 +3,13 @@
 (STD.call (STD.closure f)) = (f)
 (STD.first  (Pair f _)) = (f)
 (STD.second (Pair _ s)) = (s)
-(STD.print (STD.closure f)) = (Apps.HVM.print "<#closure>" (STD.closure f))
-(STD.print    (STD.bool 1)) = (Apps.HVM.print "true" (STD.bool 1))
-(STD.print    (STD.bool 0)) = (Apps.HVM.print "false" (STD.bool 0))
-(STD.print    (STD.int  i)) = (Apps.HVM.print (STD.stringify "" i) i)
-(STD.print               x) = (Apps.HVM.print x x)
+(STD.print (Pair x y)) = (Apps.HVM.print (STD.String.append (STD.String.concat (STD.String.concat (STD.into_printable x) ", ") (STD.String.concat (STD.into_printable y) ")")) 40) (Pair x y))
+(STD.print x) = (Apps.HVM.print (STD.into_printable x) x)
+(STD.into_printable (STD.bool    1)) = "true"
+(STD.into_printable (STD.bool    0)) = "false"
+(STD.into_printable (STD.int     i)) = (STD.stringify "" i)
+(STD.into_printable (STD.closure f)) = "<#closure>"
+(STD.into_printable               x) = x
 (STD.String.concat Data.String.nil         ys) = ys
 (STD.String.concat (Data.String.cons x xs) ys) = (Data.String.cons x (STD.String.concat xs ys))
 (STD.String.append str c) = (Data.String.cons c str)
@@ -33,8 +35,7 @@
 (STD.add (STD.int x) (STD.int y))   = (STD.int (+ x y))
 (STD.add Data.String.nil y)         = y
 (STD.add x Data.String.nil)         = x
-(STD.add (Data.String.cons x xs)
-         (Data.String.cons y ys))   = (STD.String.concat (Data.String.cons x xs) (Data.String.cons y ys))
+(STD.add (Data.String.cons x xs) (Data.String.cons y ys)) = (STD.String.concat (Data.String.cons x xs) (Data.String.cons y ys))
 (STD.add (STD.int x) (Data.String.cons y ys)) = (STD.stringify (Data.String.cons y ys) x)
 (STD.add (Data.String.cons x xs) (STD.int y)) = (STD.String.concat (Data.String.cons x xs) (STD.stringify "" y))
 (STD.sub (STD.int x) (STD.int y))   = (STD.int (- x y))

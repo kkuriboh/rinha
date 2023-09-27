@@ -1,22 +1,21 @@
-use std::{collections::HashMap, io::Write};
+use std::collections::HashMap;
 
 use micromap::Map;
 
 use crate::expr::{Expr, Ident};
 
-pub struct Codegen<T: Write> {
+pub struct Codegen {
 	expr: Expr,
-	buffer: T,
 }
 
-impl<T: Write> Codegen<T> {
-	pub fn new(expr: Expr, buffer: T) -> Self {
-		Self { expr, buffer }
+impl Codegen {
+	pub fn new(expr: Expr) -> Self {
+		Self { expr }
 	}
 
-	pub fn transpile(mut self) {
+	pub fn transpile(self) -> String {
 		let code = Transpiler::new().transpile(self.expr);
-		self.buffer.write_all(code.as_bytes()).unwrap();
+		code
 	}
 }
 
@@ -82,33 +81,11 @@ impl Transpiler {
 
 	fn transpile_expr(&mut self, expr: Expr, depth: usize) -> String {
 		match expr {
-			Expr::Int(i) => format!("(STD.int {i})"),
-			Expr::Str(s) => format!("{s:?}"),
-			Expr::Bool(true) => format!("(STD.bool 1)"),
-			Expr::Bool(false) => format!("(STD.bool 0)"),
-			Expr::Variable(v) => self.variables.get(v.val()).unwrap().clone(),
-			Expr::Binary { lhs, op, rhs } => {
-				let lhs = self.transpile_expr(*lhs, depth + 1);
-				let rhs = self.transpile_expr(*rhs, depth + 1);
-				format!("({op} {lhs} {rhs})")
-			}
-			Expr::If {
-				condition,
-				then,
-				otherwise,
-			} => {
-				format!(
-					"(STD.if ({}) @_({}) @_({}))",
-					self.transpile_expr(*condition, depth + 1),
-					self.transpile_expr(*then, depth + 1),
-					self.transpile_expr(*otherwise, depth + 1)
-				)
-			}
-			Expr::Let { name, value, next } => {
+			Expr::Let { name, value, next } if depth == 0 => {
 				let Ident(name_) = name;
 
 				match *value {
-					Expr::Abstraction { args, body } if depth == 0 => {
+					Expr::Abstraction { args, body } => {
 						let name = ToPascalCase(name_.clone());
 						self.variables.insert(name_, name.clone());
 						let next = self.transpile_expr(*next, depth);
@@ -139,7 +116,7 @@ impl Transpiler {
 						// (only works for literals)
 						match &expr {
 							Expr::Str(_) | Expr::Int(_) | Expr::Bool(_) => {
-								let literal = self.transpile_expr(expr, depth);
+								let literal = self.transpile_expr(expr, depth + 1);
 								#[cfg(debug_assertions)]
 								self.main_func.push(format!("let {name_} = {literal};\n\t"));
 								#[cfg(not(debug_assertions))]
@@ -151,19 +128,69 @@ impl Transpiler {
 
 						let val = self.transpile_expr(expr, depth + 1);
 
-						if depth == 0 {
-							#[cfg(not(debug_assertions))]
-							self.main_func.push(format!("let {name_} = {val};"));
-							#[cfg(debug_assertions)]
-							self.main_func.push(format!("let {name_} = {val};\n\t"));
-							return next;
-						}
 						#[cfg(not(debug_assertions))]
-						return format!("let {name_} = {};{}", val, next);
+						self.main_func.push(format!("let {name_} = {val};"));
 						#[cfg(debug_assertions)]
-						return format!("let {name_} = {};\n\t{}", val, next);
+						self.main_func.push(format!("let {name_} = {val};\n\t"));
+						next
 					}
 				}
+			}
+			expr if depth == 0 => match &expr {
+				Expr::Int(_)
+				| Expr::Str(_)
+				| Expr::Bool(_)
+				| Expr::Variable(_)
+				| Expr::Binary { .. }
+				| Expr::Application { .. }
+				| Expr::If { .. }
+				| Expr::Tuple(_, _) => {
+					let ret = self.transpile_expr(expr, depth + 1);
+					self.main_func.push(ret);
+					String::new()
+				}
+				_ => unreachable!(),
+			},
+			Expr::Int(i) => format!(
+				"(STD.int {})",
+				if i < 0 {
+					2147483647 + (-i) as u32
+				} else {
+					i as u32
+				}
+			),
+			Expr::Str(s) => format!("{s:?}"),
+			Expr::Bool(true) => format!("(STD.bool 1)"),
+			Expr::Bool(false) => format!("(STD.bool 0)"),
+			Expr::Variable(v) => self.variables.get(v.val()).unwrap().clone(),
+			Expr::Binary { lhs, op, rhs } => {
+				let lhs = self.transpile_expr(*lhs, depth + 1);
+				let rhs = self.transpile_expr(*rhs, depth + 1);
+				format!("({op} {lhs} {rhs})")
+			}
+			Expr::If {
+				condition,
+				then,
+				otherwise,
+			} => {
+				format!(
+					"(STD.if ({}) ({}) ({}))",
+					self.transpile_expr(*condition, depth + 1),
+					self.transpile_expr(*then, depth + 1),
+					self.transpile_expr(*otherwise, depth + 1)
+				)
+			}
+			Expr::Let { name, value, next } => {
+				let Ident(name_) = name;
+
+				self.variables.insert(name_.clone(), name_.clone());
+				let val = self.transpile_expr(*value, depth + 1);
+				let next = self.transpile_expr(*next, depth);
+
+				#[cfg(not(debug_assertions))]
+				return format!("let {name_} = {};{}", val, next);
+				#[cfg(debug_assertions)]
+				return format!("let {name_} = {};\n\t{}", val, next);
 			}
 			Expr::Application { funct, args } => {
 				let fn_name = funct.val();

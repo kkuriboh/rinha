@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+hvm = "1.0.9"
 micromap = "0.0.14"
 winnow = "0.5.15"
 

@@ -88,24 +88,43 @@ impl Transpiler {
 					Expr::Abstraction { args, body } => {
 						let name = ToPascalCase(name_.clone());
 						self.variables.insert(name_, name.clone());
-						let next = self.transpile_expr(*next, depth);
 
 						for arg in args.iter() {
 							self.variables.insert(arg.0.clone(), arg.0.clone());
 						}
 
 						let body = self.transpile_expr(*body, 1);
-						self.main_func.insert(0, next);
 
-						format!(
-							"({name}{}) = (STD.closure ({}))",
-							args.iter().fold(String::new(), |mut acc, ident| {
-								acc.push(' ');
-								acc.push_str(ident.val());
-								acc
-							}),
-							body
-						)
+						match next.as_ref() {
+							Expr::Let { value, .. }
+								if matches!(value.as_ref(), Expr::Abstraction { .. }) =>
+							{
+								let next = self.transpile_expr(*next, depth);
+								format!(
+									"({name}{}) = (STD.closure ({}))\n{next}",
+									args.iter().fold(String::new(), |mut acc, ident| {
+										acc.push(' ');
+										acc.push_str(ident.val());
+										acc
+									}),
+									body
+								)
+							}
+							_ => {
+								let next = self.transpile_expr(*next, depth);
+								self.main_func.insert(0, next);
+
+								format!(
+									"({name}{}) = (STD.closure ({}))",
+									args.iter().fold(String::new(), |mut acc, ident| {
+										acc.push(' ');
+										acc.push_str(ident.val());
+										acc
+									}),
+									body
+								)
+							}
+						}
 					}
 					expr => {
 						self.variables.insert(name_.clone(), name_.clone());

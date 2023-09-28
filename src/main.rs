@@ -1,3 +1,5 @@
+#![recursion_limit = "1024"]
+
 mod codegen;
 mod expr;
 mod json;
@@ -17,7 +19,7 @@ fn main() {
 	let mut code = codegen::Codegen::new(file.expr).transpile();
 	code.push_str("\nHVM_MAIN_CALL = Main");
 
-	// #[cfg(debug_assertions)]
+	#[cfg(debug_assertions)]
 	std::fs::write("main.hvm", code.as_bytes()).unwrap();
 
 	let tids = hvm::runtime::default_heap_tids();

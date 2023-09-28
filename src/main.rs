@@ -16,7 +16,7 @@ fn main() {
 
 	let file = parser::parse(file_path);
 
-	let mut code = codegen::Codegen::new(file.expr).transpile();
+	let mut code = codegen::Codegen::new().transpile(file.expr);
 	code.push_str("\nHVM_MAIN_CALL = Main");
 
 	#[cfg(debug_assertions)]

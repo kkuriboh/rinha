@@ -4,21 +4,6 @@ use micromap::Map;
 
 use crate::expr::{Expr, Ident};
 
-pub struct Codegen {
-	expr: Expr,
-}
-
-impl Codegen {
-	pub fn new(expr: Expr) -> Self {
-		Self { expr }
-	}
-
-	pub fn transpile(self) -> String {
-		let code = Transpiler::new().transpile(self.expr);
-		code
-	}
-}
-
 #[allow(non_snake_case)] // just for the luls
 fn ToPascalCase(string: String) -> String {
 	let mut chars = string.chars();
@@ -42,16 +27,17 @@ fn ToPascalCase(string: String) -> String {
 	ret
 }
 
-struct Transpiler {
+pub struct Codegen {
 	main_func: Vec<String>,
 	builtins: Map<&'static str, &'static str, 3>,
 	variables: HashMap<String, String>,
 }
 
-impl Transpiler {
+// XXX: too buggy, need a whole rewrite
+impl Codegen {
 	const STD: &'static str = concat!('\n', include_str!("../std.hvm"));
 
-	fn new() -> Self {
+	pub fn new() -> Self {
 		let builtins = Map::from([
 			("print", "STD.print"),
 			("first", "STD.first"),
@@ -69,7 +55,7 @@ impl Transpiler {
 		}
 	}
 
-	fn transpile(mut self, expr: Expr) -> String {
+	pub fn transpile(mut self, expr: Expr) -> String {
 		let mut code = self.transpile_expr(expr, 0);
 		code.push_str(Self::STD);
 		code.push_str(&format!(
@@ -236,7 +222,7 @@ impl Transpiler {
 				}
 
 				format!(
-					"(STD.closure ({}({})))",
+					"(STD.closure {}({}))",
 					args.iter().fold(String::new(), |mut acc, ident| {
 						acc.push('@');
 						acc.push_str(ident.val());

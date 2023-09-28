@@ -192,23 +192,24 @@ impl Transpiler {
 				#[cfg(debug_assertions)]
 				return format!("let {name_} = {};\n\t{}", val, next);
 			}
-			Expr::Application { funct, args } => {
-				let fn_name = funct.val();
-
+			Expr::Application { callee, args } => {
 				let args = args
 					.into_iter()
 					.map(|v| self.transpile_expr(v, depth))
 					.collect::<Box<[String]>>()
 					.join(" ");
 
-				match self.builtins.get(fn_name) {
-					Some(name) => format!("({} {})", name, args),
-					None => format!(
-						"(STD.call ({} {}))",
-						self.variables.get(fn_name).unwrap(),
-						args
-					),
-				}
+				let callee = 'id: {
+					match *callee {
+						Expr::Variable(var) => match self.builtins.get(var.val()) {
+							Some(fn_name) => return format!("({fn_name} {args})"),
+							None => break 'id self.variables.get(var.val()).unwrap().to_string(),
+						},
+						expr => break 'id self.transpile_expr(expr, depth + 1),
+					}
+				};
+
+				format!("(STD.call ({} {}))", callee, args)
 			}
 			Expr::Abstraction { args, body } => {
 				for arg in args.iter() {

@@ -40,7 +40,7 @@ pub enum Expr {
 	},
 	Tuple(BExpr, BExpr),
 	Application {
-		funct: Ident,
+		callee: BExpr,
 		args: Vec<Expr>,
 	},
 	Abstraction {

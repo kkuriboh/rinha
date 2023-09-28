@@ -123,9 +123,7 @@ fn parse_tuple(parent: &[JsonValue]) -> Expr {
 
 #[inline]
 fn parse_application(parent: &[JsonValue]) -> Expr {
-	let Expr::Variable(funct) = parse_variable(&*parent[1].extract_object()) else {
-		unsafe { std::hint::unreachable_unchecked() }
-	};
+	let callee = parse_expr(parent[1].extract_object()).into();
 
 	let args = parent[2]
 		.extract_array()
@@ -133,7 +131,7 @@ fn parse_application(parent: &[JsonValue]) -> Expr {
 		.map(|x| parse_expr(&JsonValue::extract_object(x)))
 		.collect();
 
-	Expr::Application { funct, args }
+	Expr::Application { callee, args }
 }
 
 #[inline]
@@ -149,7 +147,7 @@ fn parse_native(expr: &[JsonValue], name: &'static str) -> Expr {
 	let value = parse_expr(&expr[1].extract_object());
 
 	Expr::Application {
-		funct: Ident::from(name.to_string()),
+		callee: Expr::Variable(Ident::from(name.to_string())).into(),
 		args: vec![value],
 	}
 }
@@ -179,7 +177,7 @@ mod tests {
 						then: Expr::Variable(Ident::from("n".to_string())).into(),
 						otherwise: Expr::Binary {
 							lhs: Expr::Application {
-								funct: Ident::from("fib".to_string()),
+								callee: Expr::Variable(Ident::from("fib".to_string())).into(),
 								args: vec![Expr::Binary {
 									lhs: Expr::Variable(Ident::from("n".to_string())).into(),
 									op: BinOp::Sub,
@@ -189,7 +187,7 @@ mod tests {
 							.into(),
 							op: BinOp::Add,
 							rhs: Expr::Application {
-								funct: Ident::from("fib".to_string()),
+								callee: Expr::Variable(Ident::from("fib".to_string())).into(),
 								args: vec![Expr::Binary {
 									lhs: Expr::Variable(Ident::from("n".to_string())).into(),
 									op: BinOp::Sub,
@@ -204,9 +202,9 @@ mod tests {
 				}
 				.into(),
 				next: Expr::Application {
-					funct: Ident::from("print".to_string()),
+					callee: Expr::Variable(Ident::from("print".to_string())).into(),
 					args: vec![Expr::Application {
-						funct: Ident::from("fib".to_string()),
+						callee: Expr::Variable(Ident::from("fib".to_string())).into(),
 						args: vec![Expr::Int(10)]
 					}]
 				}
